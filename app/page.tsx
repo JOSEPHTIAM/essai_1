@@ -1,6 +1,6 @@
 // src/app/page.tsx
 // ==========================================
-// VUE PRINCIPALE : Dashboard, Graphes et Filtres Périodiques Avancés (2026)
+// VUE PRINCIPALE : Dashboard avec Sidebar fixe au scroll
 // ==========================================
 'use client';
 
@@ -10,12 +10,12 @@ import * as XLSX from 'xlsx';
 // Données par défaut initiales
 const defaultExcelData = [
   { id: '1', date: '02.11.2026', time: '01:48:00', zeit: '02.11.2026 01:48:00', kanalKunde: 'KYZ Martin', buchung: 'Live-Ticket Abgabe', betrag: 349.00 },
-  { id: '2', date: '03.11.2026', time: '08:13:00', zeit: '02.11.2026 08:13:00', kanalKunde: 'KYZ Mokolo', buchung: 'Ticketabgabe', betrag: 300.00 },
+  { id: '2', date: '02.11.2026', time: '08:13:00', zeit: '02.11.2026 08:13:00', kanalKunde: 'KYZ Mokolo', buchung: 'Ticketabgabe', betrag: 300.00 },
   { id: '3', date: '02.11.2026', time: '08:18:15', zeit: '02.11.2026 08:18:15', kanalKunde: 'KYZ Mokolo', buchung: 'Ticketabgabe', betrag: 300.00 },
   { id: '4', date: '02.11.2026', time: '08:26:40', zeit: '02.11.2026 08:26:40', kanalKunde: 'KYZ Mokolo', buchung: 'Ticketabgabe', betrag: 200.00 },
   { id: '5', date: '02.11.2026', time: '08:32:10', zeit: '02.11.2026 08:32:10', kanalKunde: 'KYZ Mokolo', buchung: 'Live-Ticket Abgabe', betrag: 200.00 },
   { id: '6', date: '02.11.2026', time: '08:33:55', zeit: '02.11.2026 08:33:55', kanalKunde: 'KYZ Mokolo', buchung: 'Ticketabgabe', betrag: 200.00 },
-  { id: '7', date: '04.11.2026', time: '08:35:20', zeit: '02.11.2026 08:35:20', kanalKunde: 'KYZ Mokolo', buchung: 'Ticketabgabe', betrag: 200.00 },
+  { id: '7', date: '02.11.2026', time: '08:35:20', zeit: '02.11.2026 08:35:20', kanalKunde: 'KYZ Mokolo', buchung: 'Ticketabgabe', betrag: 200.00 },
   { id: '8', date: '02.11.2026', time: '08:41:05', zeit: '02.11.2026 08:41:05', kanalKunde: 'KYZ Mokolo', buchung: 'Ticketabgabe', betrag: 200.00 },
   { id: '9', date: '02.11.2026', time: '08:47:30', zeit: '02.11.2026 08:47:30', kanalKunde: 'KYZ Mokolo', buchung: 'Ticketabgabe', betrag: 200.00 },
   { id: '10', date: '02.11.2026', time: '08:47:45', zeit: '02.11.2026 08:47:45', kanalKunde: 'KYZ Ndokotti', buchung: 'Ticketabgabe', betrag: 800.00 },
@@ -39,19 +39,16 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [tableData, setTableData] = useState(defaultExcelData);
 
-  // États pour la Période Initiale
   const [startYear, setStartYear] = useState<string>('Tous');
   const [startMonth, setStartMonth] = useState<string>('Tous');
   const [startDay, setStartDay] = useState<string>('Tous');
   const [startTimeInput, setStartTimeInput] = useState<string>('');
 
-  // États pour la Période de Fin
   const [endYear, setEndYear] = useState<string>('Tous');
   const [endMonth, setEndMonth] = useState<string>('Tous');
   const [endDay, setEndDay] = useState<string>('Tous');
   const [endTimeInput, setEndTimeInput] = useState<string>('');
 
-  // Génération de la liste des années (De 2026 en descendant)
   const yearsList = useMemo(() => {
     const currentYear = 2026;
     const years = [];
@@ -61,7 +58,6 @@ export default function HomePage() {
     return years;
   }, []);
 
-  // Liste des 12 mois
   const monthsList = [
     { num: '01', name: '01 - Janvier' },
     { num: '02', name: '02 - Février' },
@@ -77,7 +73,6 @@ export default function HomePage() {
     { num: '12', name: '12 - Décembre' },
   ];
 
-  // Calcul du nombre de jours dynamique selon l'année et le mois choisis
   const getDaysInMonthList = (yearStr: string, monthStr: string) => {
     if (monthStr === 'Tous') return Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
     const y = yearStr === 'Tous' ? 2026 : parseInt(yearStr, 10);
@@ -89,7 +84,6 @@ export default function HomePage() {
   const startDaysList = useMemo(() => getDaysInMonthList(startYear, startMonth), [startYear, startMonth]);
   const endDaysList = useMemo(() => getDaysInMonthList(endYear, endMonth), [endYear, endMonth]);
 
-  // Parsing automatique de la date et de l'heure HH:MM:SS
   const parseDateTimeString = (rawStr: string) => {
     let datePart = '02.11.2026';
     let timePart = '01:48:00';
@@ -116,7 +110,6 @@ export default function HomePage() {
     };
   };
 
-  // Chargement de fichier Excel / CSV / HTML
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -240,7 +233,6 @@ export default function HomePage() {
     if (parsedRows.length > 0) setTableData(parsedRows);
   };
 
-  // Filtrage combiné (Recherche d'éléments + Intervalle périodique)
   const filteredData = useMemo(() => {
     return tableData.filter((item) => {
       const matchesSearch = Object.values(item).some((val) =>
@@ -250,13 +242,11 @@ export default function HomePage() {
       const [dDay, dMonth, dYear] = item.date.split('.');
       const dTime = item.time;
 
-      // Filtrage par Période Initiale
       if (startYear !== 'Tous' && dYear < startYear) return false;
       if (startMonth !== 'Tous' && dMonth < startMonth) return false;
       if (startDay !== 'Tous' && dDay < startDay) return false;
       if (startTimeInput.trim() !== '' && dTime < startTimeInput.trim()) return false;
 
-      // Filtrage par Période de Fin
       if (endYear !== 'Tous' && dYear > endYear) return false;
       if (endMonth !== 'Tous' && dMonth > endMonth) return false;
       if (endDay !== 'Tous' && dDay > endDay) return false;
@@ -346,8 +336,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black text-black dark:text-zinc-50 flex">
       
-      {/* SIDEBAR */}
-      <aside className="w-64 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6 hidden md:flex flex-col justify-between">
+      {/* SIDEBAR FIXE AU SCROLL (sticky top-0 h-screen) */}
+      <aside className="w-64 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6 hidden md:flex flex-col justify-between sticky top-0 h-screen overflow-y-auto">
         <div>
           <div className="flex items-center gap-3 mb-10">
             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold">E</div>
@@ -371,7 +361,7 @@ export default function HomePage() {
       {/* CONTENU PRINCIPAL */}
       <main className="flex-1 flex flex-col min-w-0">
         
-        <header className="h-20 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-8 flex items-center justify-between">
+        <header className="h-20 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-8 flex items-center justify-between sticky top-0 z-20 backdrop-blur-md bg-opacity-90 dark:bg-opacity-90">
           <h1 className="text-xl font-bold tracking-tight uppercase">
             {activeMenu === 'dashboard' && 'TABLEAU DE BORD (DONNÉES ACTIVES)'}
             {activeMenu === 'diagrammes' && 'Graphes en diagrammes (Histogramme unifié)'}
@@ -391,7 +381,6 @@ export default function HomePage() {
           {/* DIV PRINCIPALE DE RECHERCHE */}
           <div className="flex flex-col gap-6 bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
             
-            {/* Ligne Supérieure : Recherche globale & Importation */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-zinc-100 dark:border-zinc-900">
               <div className="w-full lg:w-auto">
                 <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Recherche d'éléments</h2>
@@ -423,7 +412,7 @@ export default function HomePage() {
               <h3 className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mb-3">Recherche périodique</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
-                {/* Div Période Initiale */}
+                {/* Période Initiale */}
                 <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 space-y-3">
                   <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Période initiale</p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -461,7 +450,7 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Div Période de Fin */}
+                {/* Période de Fin */}
                 <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 space-y-3">
                   <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Période de fin</p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
